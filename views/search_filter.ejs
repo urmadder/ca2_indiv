@@ -1,0 +1,184 @@
+<!--search_filter.ejs Clinton -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search & Filter Expenses</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url('/images/10530762.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      padding: 40px;
+    }
+    .back-btn { margin-bottom: 20px; }
+    .filter-form, .stats-box {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    mark {
+      background-color: yellow;
+      padding: 0 2px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Back Button and Title -->
+  <a href="/dashboard" class="btn btn-secondary back-btn">← Back to Dashboard</a>
+  <h2 class="text-center mb-4">Search & Filter Expenses</h2>
+
+  <!-- Stats Section -->
+  <div class="stats-box">
+    <% if (user?.role === 'admin') { %>
+      <p><strong>💰 Top Spender:</strong> <%= topSpender?.username %> ($<%= Number(topSpender?.total || 0).toFixed(2) %>)</p>
+      <p><strong>🏆 Most Spent Category (All):</strong> <%= topCategory?.category %> ($<%= Number(topCategory?.total || 0).toFixed(2) %>)</p>
+    <% } %>
+    <p><strong>📌 <%= users.find(u => u.id == userId)?.username || 'You' %>'s Top Category:</strong> 
+      <%= userCategory?.category %> ($<%= Number(userCategory?.total || 0).toFixed(2) %>)
+    </p>
+  </div>
+
+  <!-- Filter Form -->
+  <form method="GET" action="/search" class="row row-cols-lg-auto g-2 align-items-center filter-form">
+    <!-- Search keyword -->
+    <div class="col">
+      <input type="text" name="keyword" class="form-control" placeholder="Search description" value="<%= keyword || '' %>">
+    </div>
+
+    <!-- Admin-only user dropdown -->
+    <% if (user?.role === 'admin') { %>
+      <div class="col">
+        <select name="userId" class="form-select">
+          <option value="">All Users</option>
+          <% users.forEach(u => { %>
+            <option value="<%= u.id %>" <%= userId == u.id ? 'selected' : '' %>><%= u.username %></option>
+          <% }) %>
+        </select>
+      </div>
+    <% } %>
+
+    <!-- Dynamic Category Dropdown (Admin gets all categories) -->
+    <div class="col">
+      <select name="category" class="form-select">
+        <option value="all">All Categories</option>
+        <% allCategories.forEach(c => { %>
+          <option value="<%= c %>" <%= category === c ? 'selected' : '' %>><%= c %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <!-- Dynamic Month Dropdown (Admin gets all months) -->
+    <div class="col">
+      <select name="month" class="form-select">
+        <option value="">All Months</option>
+        <% allMonths.forEach(m => { %>
+          <option value="<%= m.value %>" <%= month === m.value ? 'selected' : '' %>><%= m.label %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <!--  Date Range -->
+    <div class="col">
+      <input type="date" name="from" class="form-control" value="<%= from || '' %>">
+    </div>
+    <div class="col">
+      <input type="date" name="to" class="form-control" value="<%= to || '' %>">
+    </div>
+
+    <!-- Sort Options -->
+    <div class="col">
+      <select name="sort" class="form-select">
+        <option value="">Sort by Date</option>
+        <option value="amount_asc" <%= sort === 'amount_asc' ? 'selected' : '' %>>Amount ↑</option>
+        <option value="amount_desc" <%= sort === 'amount_desc' ? 'selected' : '' %>>Amount ↓</option>
+        <option value="category_asc" <%= sort === 'category_asc' ? 'selected' : '' %>>Category A→Z</option>
+        <option value="category_desc" <%= sort === 'category_desc' ? 'selected' : '' %>>Category Z→A</option>
+      </select>
+    </div>
+
+    <!-- Buttons -->
+    <div class="col">
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+    <div class="col">
+      <a href="/search" class="btn btn-outline-secondary">Reset Filter</a>
+    </div>
+  </form>
+
+  <!--  Date Summary -->
+  <% const formatDate = (d) => new Date(d).toLocaleDateString('en-SG', {
+    day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
+  }); %>
+
+  <p>🗓️ 
+    <% if (from && to) { %>
+      Showing results from <%= formatDate(from) %> to <%= formatDate(to) %>
+    <% } else if (from) { %>
+      Showing results from <%= formatDate(from) %> onwards
+    <% } else if (to) { %>
+      Showing results up to <%= formatDate(to) %>
+    <% } else { %>
+      Showing all dates
+    <% } %>
+  </p>
+
+  <!--  Results Summary and Table -->
+  <p><strong><%= expenses.length %> results found</strong></p>
+  <p><strong>Total: $<%= typeof total === 'number' ? total.toFixed(2) : '0.00' %></strong></p>
+
+  <table class="table table-bordered bg-white">
+    <thead>
+      <tr>
+        <% if (user?.role === 'admin') { %><th>User</th><% } %>
+        <th>Description</th>
+        <th>Amount</th>
+        <th>Category</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (expenses.length === 0) { %>
+        <tr><td colspan="6" class="text-center">No results found.</td></tr>
+      <% } else { %>
+        <% expenses.forEach(e => { %>
+          <tr>
+            <% if (user?.role === 'admin') { %>
+              <td><%= users.find(u => u.id == e.userId)?.username || 'Unknown' %></td>
+            <% } %>
+            <td>
+              <%- keyword
+                ? e.description.replace(new RegExp(keyword, 'gi'), match => `<mark>${match}</mark>`)
+                : e.description %>
+            </td>
+            <td>$<%= isNaN(e.amount) ? '0.00' : Number(e.amount).toFixed(2) %></td>
+            <td>
+              <% let badgeClass =
+                e.category === 'Food' ? 'bg-success' :
+                e.category === 'Transport' ? 'bg-primary' :
+                e.category === 'Shopping' ? 'bg-warning' :
+                e.category === 'Other' ? 'bg-secondary' : 'bg-dark'; %>
+              <span class="badge <%= badgeClass %> text-light"><%= e.category %></span>
+            </td>
+            <td><%= new Date(e.date).toLocaleDateString('en-SG', {
+              day: 'numeric', month: 'long', year: 'numeric', weekday: 'short'
+            }) %></td>
+            <td><a href="/delete/<%= e.id %>" onclick="return confirm('This action cannot be undone. Do you still want to delete?')">Delete</a></td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+
+</div>
+</body>
+</html>

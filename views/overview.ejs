@@ -1,0 +1,140 @@
+<!---Hans' extra stuff -->
+<!---Some CRUD will come later -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spending Overview</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: url('/images/dashboard.ejs.jpg') no-repeat center center fixed;
+    background-size: cover;
+    padding: 30px;
+    text-align: center;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  h2 {
+    margin-bottom: 40px;
+    color: #333;
+  }
+
+  canvas {
+    max-width: 500px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.8); /* Optional: soft white behind chart */
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  .button {
+    display: inline-block;
+    border-radius: 4px;
+    background-color: #f4511e;
+    border: none;
+    color: #FFFFFF;
+    text-align: center;
+    font-size: 18px;
+    padding: 14px 20px;
+    width: auto;
+    transition: all 0.5s;
+    cursor: pointer;
+    margin: 10px;
+    white-space: nowrap;
+  }
+
+  .button span {
+    display: inline-block;
+    position: relative;
+    transition: 0.5s;
+    padding-left: 0;
+  }
+
+  .button span:before {
+    content: '\00ab';
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    left: -20px;
+    transition: 0.5s;
+  }
+
+  .button:hover span {
+    padding-left: 25px;
+  }
+
+  .button:hover span:before {
+    opacity: 1;
+    left: 0;
+  }
+</style>
+
+
+ 
+</head>
+<body>
+
+  <h2>Hello, <%= user.username %>. Welcome Back! <br>Here's your spending breakdown:</h2>
+
+  <canvas id="myPieChart" width="600" height="600"></canvas>
+
+  <script>
+    
+    const chartData = JSON.parse('<%- JSON.stringify(chartData) %>');
+
+    const categories = chartData.map(row => row.category);
+    const totals = chartData.map(row => row.total);
+
+    const ctx = document.getElementById('myPieChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: categories,
+        datasets: [{
+          label: 'Spending by Category',
+          data: totals,
+          backgroundColor: [
+            '#FF6384', '#36A2EB', '#FFCE56',
+            '#66BB6A', '#BA68C8', '#FFA726',
+            '#8D6E63', '#90A4AE', '#26A69A'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+          },
+        }
+      }
+    });
+  </script>
+
+
+    <div style="margin-top: 30px;">
+  <h3>Your Note:</h3>
+  <% if (comment) { %>
+    <p><%= comment %></p>
+  <% } else { %>
+    <p style="color: gray;">Please add a comment for your future reference!</p>
+  <% } %>
+    </div>
+
+    <form action="/comment" method="POST" style="margin-top: 20px;">
+  <textarea name="comment" rows="4" cols="50" placeholder="Add your note here..."><%= comment || '' %></textarea><br>
+  <button type="submit" class="button">Save Comment</button>
+</form>
+
+
+    <a href="/dashboard" style="text-decoration: none;">
+    <button class="button" style="vertical-align: middle;">
+        <span>Back to Dashboard</span>
+    </button>
+    </a>
+
+</body>
+</html>

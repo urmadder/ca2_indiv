@@ -1,0 +1,56 @@
+<!---jia -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Users</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>Manage Users</h1>
+
+  <% if (messages.error.length > 0) { %>
+    <p style="color:red;"><%= messages.error[0] %></p>
+  <% } %>
+
+  <% if (messages.success.length > 0) { %>
+    <p style="color:green;"><%= messages.success[0] %></p>
+  <% } %>
+
+  <table border="1" cellpadding="10" cellspacing="0">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(user => { %>
+        <tr>
+          <td><%= user.id %></td>
+          <td><%= user.username %></td>
+          <td><%= user.email %></td>
+          <td><%= user.phone %></td>
+          <td><%= user.role %></td>
+          <td>
+            <% if (user.id !== userSession.id) { %>
+              <form action="/deleteUser/<%= user.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" style="display:inline;">
+                <button type="submit" style="color:red;">Delete</button>
+              </form>
+            <% } else { %>
+              <em>(You)</em>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+
+  <br>
+  <a href="/admin">Back to Admin Dashboard</a>
+</body>
+</html>
